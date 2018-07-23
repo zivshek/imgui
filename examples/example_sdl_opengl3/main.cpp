@@ -22,6 +22,20 @@
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
 
+static void GetVtxIdxDelta(ImDrawList* dl, int* vtx, int *idx)
+{
+    static int vtx_n, idx_n;
+    static int vtx_o, idx_o;
+    vtx_n = dl->VtxBuffer.Size;
+    idx_n = dl->IdxBuffer.Size;
+
+    *vtx = vtx_n - vtx_o;
+    *idx = idx_n - idx_o;
+
+    vtx_o = vtx_n;
+    idx_o = idx_n;
+}
+
 // Main code
 int main(int, char**)
 {
@@ -84,6 +98,8 @@ int main(int, char**)
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
     //ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer bindings
@@ -97,6 +113,8 @@ int main(int, char**)
     // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
     // - Read 'misc/fonts/README.txt' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+    //io.Fonts->RoundCornersMaxSize = 60;
+    style.WindowRounding = io.Fonts->RoundCornersMaxSize;
     //io.Fonts->AddFontDefault();
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
@@ -144,6 +162,95 @@ int main(int, char**)
             static int counter = 0;
 
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            // Rounded corners demo start
+
+            ImGui::TextUnformatted("Press alt to toggle quads (hold to see them).");
+            ImGui::TextUnformatted(io.KeyAlt ? "ALT ON  -- Rasterized quad circle! w00t! OPTIMIZATION!"
+                                             : "ALT OFF -- Regular, boring circle with PathArcToFast.");
+
+            static int r = io.Fonts->RoundCornersMaxSize / 2;
+            ImGui::SliderInt("radius", &r, 0, io.Fonts->RoundCornersMaxSize);
+
+            ImGui::BeginGroup();
+
+            static int s = 20;
+            ImGui::PushItemWidth(120);
+            ImGui::SliderInt("segments", &s, 3, 100);
+            ImGui::PopItemWidth();
+
+            int vtx = 0, idx = 0;
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+
+            {
+                ImGui::Button("", ImVec2(200, 200));
+                GetVtxIdxDelta(dl, &vtx, &idx);
+                ImVec2 min = ImGui::GetItemRectMin();
+                ImVec2 size = ImGui::GetItemRectSize();
+                dl->AddCircleFilled(ImVec2(min.x + size.x / 2, min.y + size.y / 2), r, 0xFFFF00FF, s);
+                GetVtxIdxDelta(dl, &vtx, &idx);
+                ImGui::Text("AddCircleFilled\n %d vtx, %d idx", vtx, idx);
+            }
+            {
+              ImGui::Button("", ImVec2(200, 200));
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              ImVec2 min = ImGui::GetItemRectMin();
+              ImVec2 size = ImGui::GetItemRectSize();
+              dl->AddCircle(ImVec2(min.x + size.x / 2, min.y + size.y / 2), r, 0xFFFF00FF, s);
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              ImGui::Text("AddCircle\n %d vtx, %d idx", vtx, idx);
+            }
+
+            ImGui::EndGroup();
+
+            ImGui::SameLine();
+
+            ImGui::BeginGroup();
+
+            static bool tl = true, tr = true, bl = true, br = true;
+            int flags = 0;
+            ImGui::Checkbox("TL", &tl);
+            ImGui::SameLine(0, 12);
+            ImGui::Checkbox("TR", &tr);
+            ImGui::SameLine(0, 12);
+            ImGui::Checkbox("BL", &bl);
+            ImGui::SameLine(0, 12);
+            ImGui::Checkbox("BR", &br);
+
+            flags |= tl ? ImDrawCornerFlags_TopLeft : 0;
+            flags |= tr ? ImDrawCornerFlags_TopRight : 0;
+            flags |= bl ? ImDrawCornerFlags_BotLeft : 0;
+            flags |= br ? ImDrawCornerFlags_BotRight : 0;
+
+            {
+              ImGui::Button("", ImVec2(200, 200));
+              ImVec2 r_min = ImGui::GetItemRectMin();
+              ImVec2 r_max = ImGui::GetItemRectMax();
+
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              dl->AddRectFilled(r_min, r_max, 0xFFFF00FF, r, flags);
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              ImGui::Text("AddRectFilled\n %d vtx, %d idx", vtx, idx);
+            }
+            {
+              ImGui::Button("", ImVec2(200, 200));
+              ImVec2 r_min = ImGui::GetItemRectMin();
+              ImVec2 r_max = ImGui::GetItemRectMax();
+
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              dl->AddRect(r_min, r_max, 0xFFFF00FF, r, flags);
+              GetVtxIdxDelta(dl, &vtx, &idx);
+              ImGui::Text("AddRect\n %d vtx, %d idx", vtx, idx);
+            }
+
+            ImGui::EndGroup();
+
+            ImGui::Separator();
+
+            ImFontAtlas* atlas = ImGui::GetIO().Fonts;
+            ImGui::Image(atlas->TexID, ImVec2((float)atlas->TexWidth, (float)atlas->TexHeight), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+
+            // Rounded corners demo end
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
