@@ -28,6 +28,11 @@ HOW TO UPDATE?
   and API updates have been a little more frequent lately. They are documented below and in imgui.cpp and should not affect all users.
 - Please report any issue!
 
+- Misc: Switched to using a variant of fnv1a hash function instead of CRC32.
+  Hashing is roughly 50% faster (assuming the CRC32 table was already in cache), and
+  mostly the main benefit of this change is we don't waste 1KB of cache for the CRC32
+  table, ultimately improving performances everywhere by a small margin.
+
 
 -----------------------------------------------------------------------
  VERSION 1.72 (Released 2019-07-27)
