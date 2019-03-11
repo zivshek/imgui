@@ -339,6 +339,7 @@ Other Changes:
   tree depth instead of a relative one.
 - Log/Capture: Fixed CollapsingHeader trailing ascii representation being "#" instead of "##".
 - ImFont: Added GetGlyphRangesVietnamese() helper. (#2403)
+- Misc: ImVector: Added operator[] taking a size_t index.
 - Misc: Asserting in NewFrame() if style.WindowMinSize is zero or smaller than (1.0f,1.0f).
 - Demo: Using GetBackgroundDrawList() and GetForegroundDrawList() in "Custom Rendering" demo.
 - Demo: InputText: Demonstrating use of ImGuiInputTextFlags_CallbackResize. (#2006, #1443, #1008).
