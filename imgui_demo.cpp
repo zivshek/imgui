@@ -921,34 +921,35 @@ static void ShowDemoWindowWidgets()
             HelpMarker("Hold CTRL and click to select multiple items. Hold SHIFT to select a range.");
             ImGui::CheckboxFlags("io.ConfigFlags: NavEnableKeyboard", (unsigned int *)&ImGui::GetIO().ConfigFlags, ImGuiConfigFlags_NavEnableKeyboard);
 
-            ImGui::ListBoxHeader("##Basket", ImVec2(-1, ImGui::GetFontSize() * 20));
-
-            ImGuiMultiSelectData* multi_select_data = ImGui::BeginMultiSelect(0, (void*)(intptr_t)selection_ref, selection.GetSelected((int)selection_ref));
-            if (multi_select_data->RequestClear)     { selection.Clear(); }
-            if (multi_select_data->RequestSelectAll) { selection.SelectAll(COUNT); }
-            ImGuiListClipper clipper(COUNT);
-            while (clipper.Step())
+            if (ImGui::ListBoxHeader("##Basket", ImVec2(-1, ImGui::GetFontSize() * 20)))
             {
-                if (clipper.DisplayStart > (int)selection_ref)
-                    multi_select_data->RangeSrcPassedBy = true;
-                for (int n = clipper.DisplayStart; n < clipper.DisplayEnd; n++)
+                ImGuiMultiSelectData* multi_select_data = ImGui::BeginMultiSelect(0, (void*)(intptr_t)selection_ref, selection.GetSelected((int)selection_ref));
+                if (multi_select_data->RequestClear) { selection.Clear(); }
+                if (multi_select_data->RequestSelectAll) { selection.SelectAll(COUNT); }
+                ImGuiListClipper clipper(COUNT);
+                while (clipper.Step())
                 {
-                    ImGui::PushID(n);
-                    char label[64];
-                    sprintf(label, "Object %05d (category: %s)", n, random_names[n % IM_ARRAYSIZE(random_names)]);
-                    bool item_is_selected = selection.GetSelected(n);
-                    ImGui::SetNextItemMultiSelectData((void*)(intptr_t)n);
-                    if (ImGui::Selectable(label, item_is_selected))
-                        selection.SetSelected(n, !item_is_selected);
-                    ImGui::PopID();
+                    if (clipper.DisplayStart > (int)selection_ref)
+                        multi_select_data->RangeSrcPassedBy = true;
+                    for (int n = clipper.DisplayStart; n < clipper.DisplayEnd; n++)
+                    {
+                        ImGui::PushID(n);
+                        char label[64];
+                        sprintf(label, "Object %05d (category: %s)", n, random_names[n % IM_ARRAYSIZE(random_names)]);
+                        bool item_is_selected = selection.GetSelected(n);
+                        ImGui::SetNextItemMultiSelectData((void*)(intptr_t)n);
+                        if (ImGui::Selectable(label, item_is_selected))
+                            selection.SetSelected(n, !item_is_selected);
+                        ImGui::PopID();
+                    }
                 }
+                multi_select_data = ImGui::EndMultiSelect();
+                selection_ref = (int)(intptr_t)multi_select_data->RangeSrc;
+                ImGui::ListBoxFooter();
+                if (multi_select_data->RequestClear)     { selection.Clear(); }
+                if (multi_select_data->RequestSelectAll) { selection.SelectAll(COUNT); }
+                if (multi_select_data->RequestSetRange)  { selection.SetRange((int)(intptr_t)multi_select_data->RangeSrc, (int)(intptr_t)multi_select_data->RangeDst, multi_select_data->RangeValue ? 1 : 0); }
             }
-            multi_select_data = ImGui::EndMultiSelect();
-            selection_ref = (int)(intptr_t)multi_select_data->RangeSrc;
-            ImGui::ListBoxFooter();
-            if (multi_select_data->RequestClear)     { selection.Clear(); }
-            if (multi_select_data->RequestSelectAll) { selection.SelectAll(COUNT); }
-            if (multi_select_data->RequestSetRange)  { selection.SetRange((int)(intptr_t)multi_select_data->RangeSrc, (int)(intptr_t)multi_select_data->RangeDst, multi_select_data->RangeValue ? 1 : 0); }
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Rendering more text into the same line"))
